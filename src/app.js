@@ -27,15 +27,12 @@ app.use((req, res, next) => {
 app.use('/api/v1/prestamos', prestamosRoutes);
 app.use('/api/v1', inventarioRoutes);
 
-// Servir archivos estáticos de la raíz (presentacion.html, etc.)
-app.use(express.static(path.join(__dirname, '..')));
-
-// Ruta raíz GET /: Devuelve la información y mapa de endpoints de la API en formato JSON
-app.get('/', (req, res) => {
+// Ruta raíz GET / y GET /api: Devuelve el contrato y mapa de endpoints de la API en JSON
+app.get(['/', '/api'], (req, res) => {
   res.json({
     ok: true,
     modulo: 'API REST Gestión de Préstamos de Celulares en Servicio Técnico',
-    version: '1.0.0-fase1',
+    version: '1.0.1-qa',
     equipo: 'Equipo 02',
     estado: 'OPERATIVO',
     health: '/health',
@@ -56,6 +53,9 @@ app.get('/', (req, res) => {
 app.get('/presentacion', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'presentacion.html'));
 });
+
+// Servir archivos estáticos de la raíz únicamente para rutas específicas
+app.use(express.static(path.join(__dirname, '..')));
 
 // Endpoint de salud
 app.get('/health', (req, res) => {

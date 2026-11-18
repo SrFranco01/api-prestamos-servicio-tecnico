@@ -30,24 +30,26 @@ app.use('/api/v1', inventarioRoutes);
 // Servir archivos estáticos de la raíz (presentacion.html, etc.)
 app.use(express.static(path.join(__dirname, '..')));
 
-// Ruta raíz GET /: Si se abre en navegador sirve la presentación, si es petición API devuelve JSON
+// Ruta raíz GET /: Devuelve la información y mapa de endpoints de la API en formato JSON
 app.get('/', (req, res) => {
-  if (req.accepts('html')) {
-    return res.sendFile(path.join(__dirname, '..', 'presentacion.html'));
-  }
   res.json({
     ok: true,
     modulo: 'API REST Gestión de Préstamos de Celulares en Servicio Técnico',
     version: '1.0.0-fase1',
-    presentacion: '/presentacion.html',
+    equipo: 'Equipo 02',
+    estado: 'OPERATIVO',
     health: '/health',
     endpoints: {
-      prestamos: '/api/v1/prestamos',
-      celulares: '/api/v1/celulares',
-      clientes: '/api/v1/clientes',
-      ordenes: '/api/v1/ordenes',
-      reset: 'POST /api/v1/reset'
-    }
+      listar_o_filtrar_prestamos: 'GET /api/v1/prestamos (ej: ?estado=ACTIVO)',
+      registrar_prestamo: 'POST /api/v1/prestamos',
+      consultar_prestamo_id: 'GET /api/v1/prestamos/:id',
+      devolver_prestamo: 'PATCH /api/v1/prestamos/:id/devolucion',
+      inventario_celulares: 'GET /api/v1/celulares',
+      clientes: 'GET /api/v1/clientes',
+      ordenes: 'GET /api/v1/ordenes',
+      reset_base_datos: 'POST /api/v1/reset'
+    },
+    presentacion_slides: '/presentacion.html'
   });
 });
 

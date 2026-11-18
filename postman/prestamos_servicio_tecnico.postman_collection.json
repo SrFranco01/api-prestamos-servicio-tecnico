@@ -1,0 +1,167 @@
+{
+  "info": {
+    "_postman_id": "a9b8c7d6-e5f4-4321-9876-123456789abc",
+    "name": "API Gestión Préstamos Celulares - Servicio Técnico (Equipo 01)",
+    "description": "Colección oficial de pruebas y demostración para la entrega de Programación Avanzada con enfoque en QA.\n\nDemuestra el cumplimiento estricto de los requisitos funcionales (RF-01 a RF-04), criterios de aceptación (CA-01 y CA-02) y reglas de negocio (RN-01 a RN-14).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Estado Inicial - Consultar Celulares Disponibles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/celulares",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "celulares"]
+        },
+        "description": "Permite comprobar que el dispositivo 'CEL-001' (Galaxy A54) inicia con disponible = 1 (true)."
+      },
+      "response": []
+    },
+    {
+      "name": "02. [DEMO ÉXITO CA-01] RF-01 Registrar Préstamo Válido (201 Created)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id_prestamo\": \"PRE-001\",\n  \"id_cliente\": \"CLI-001\",\n  \"id_orden\": \"ST-001\",\n  \"id_celular\": \"CEL-001\",\n  \"fecha_limite\": \"2026-11-10T18:00:00.000Z\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/prestamos",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "prestamos"]
+        },
+        "description": "Demostración de CA-01: Cliente CLI-001 elegible, Orden ST-001 activa y Celular CEL-001 libre.\nCrea el préstamo PRE-001 con estado ACTIVO y marca el celular como disponible = false de forma atómica."
+      },
+      "response": []
+    },
+    {
+      "name": "03. [COMPROBACIÓN BD] Verificar Celular CEL-001 Ocupado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/celulares",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "celulares"]
+        },
+        "description": "Comprueba el efecto colateral atómico: CEL-001 ahora tiene disponible = 0 (false)."
+      },
+      "response": []
+    },
+    {
+      "name": "04. [DEMO RECHAZO CA-02] RF-01 Intento Préstamo con Celular Ocupado (409 Conflict)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id_prestamo\": \"PRE-002\",\n  \"id_cliente\": \"CLI-001\",\n  \"id_orden\": \"ST-001\",\n  \"id_celular\": \"CEL-001\",\n  \"fecha_limite\": \"2026-11-10T18:00:00.000Z\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/prestamos",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "prestamos"]
+        },
+        "description": "Demostración de CA-02: Se intenta prestar CEL-001 nuevamente cuando ya está ocupado.\nLa API rechaza la petición con código HTTP 409 Conflict y error CELULAR_NO_DISPONIBLE, protegiendo la integridad de la base de datos (RN-12)."
+      },
+      "response": []
+    },
+    {
+      "name": "05. RF-02 Consultar Préstamo por ID (PRE-001)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/prestamos/PRE-001",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "prestamos", "PRE-001"]
+        },
+        "description": "HU-02: Consulta detallada del préstamo PRE-001 mostrando datos del cliente, equipo y estado."
+      },
+      "response": []
+    },
+    {
+      "name": "06. RF-03 Listar Préstamos Activos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/prestamos?estado=ACTIVO",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "prestamos"],
+          "query": [
+            {
+              "key": "estado",
+              "value": "ACTIVO"
+            }
+          ]
+        },
+        "description": "HU-03: Filtra y retorna únicamente los préstamos en curso pendientes de retorno."
+      },
+      "response": []
+    },
+    {
+      "name": "07. RF-04 Registrar Devolución de Dispositivo (PRE-001)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/prestamos/PRE-001/devolucion",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "prestamos", "PRE-001", "devolucion"]
+        },
+        "description": "HU-04: Marca el préstamo como DEVUELTO y libera atómicamente el equipo CEL-001 (disponible = true) en una sola transacción."
+      },
+      "response": []
+    },
+    {
+      "name": "08. [COMPROBACIÓN BD] Verificar Celular CEL-001 Liberado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/celulares",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "celulares"]
+        },
+        "description": "Verifica que CEL-001 vuelve a tener disponible = 1 (true)."
+      },
+      "response": []
+    },
+    {
+      "name": "09. [UTILIDAD] Resetear Base de Datos de Prueba",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reset",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "reset"]
+        },
+        "description": "Reinicia todas las tablas y datos ficticios originales para repetir la demostración en cualquier momento."
+      },
+      "response": []
+    }
+  ]
+}

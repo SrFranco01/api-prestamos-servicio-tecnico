@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYBER-REPAIR // API BACKEND — Gestión de Préstamos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #030712;
+      --bg-panel: rgba(11, 17, 33, 0.78);
+      --bg-card: rgba(15, 23, 42, 0.85);
+      --border-glow: rgba(56, 189, 248, 0.25);
+      --border-dim: rgba(255, 255, 255, 0.08);
+      
+      --cyan: #00f0ff;
+      --cyan-glow: 0 0 20px rgba(0, 240, 255, 0.45);
+      --emerald: #10b981;
+      --emerald-glow: 0 0 20px rgba(16, 185, 129, 0.45);
+      --amber: #f59e0b;
+      --amber-glow: 0 0 20px rgba(245, 158, 11, 0.45);
+      --rose: #ff0055;
+      --rose-glow: 0 0 20px rgba(255, 0, 85, 0.45);
+      --purple: #a855f7;
+      --purple-glow: 0 0 20px rgba(168, 85, 247, 0.45);
+
+      --text-white: #f8fafc;
+      --text-dim: #94a3b8;
+      --text-cyber: #38bdf8;
+      
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-white);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 240, 255, 0.15), transparent),
+        radial-gradient(ellipse 60% 50% at 90% 80%, rgba(168, 85, 247, 0.12), transparent),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      position: relative;
+    }
+
+    /* LÍNEA DE ESCANEO CYBERNETICA ANIMADA */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--purple), transparent);
+      z-index: 9999;
+      animation: scanline 4s linear infinite;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    @keyframes scanline {
+      0% { transform: translateY(-10px); }
+      50% { transform: translateY(100vh); }
+      100% { transform: translateY(-10px); }
+    }
+
+    /* TOP HUD NAVIGATION BAR */
+    header {
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glow);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .brand-hud {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .device-icon-box {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(168, 85, 247, 0.2));
+      border: 1px solid var(--cyan);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--cyan-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device-icon-box svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--cyan);
+      stroke-width: 2;
+      filter: drop-shadow(0 0 8px var(--cyan));
+    }
+
+    .brand-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--emerald);
+      border-radius: 50%;
+      box-shadow: var(--emerald-glow);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    .brand-subtitle {
+      font-family: var(--font-code);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SLIDE BUTTON CONTROLS */
+    .hud-nav {
+      display: flex;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--border-dim);
+    }
+
+    .hud-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .hud-btn.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.18), rgba(56, 189, 248, 0.1));
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+    }
+
+    .hud-btn .slide-num {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    /* HUD METRICS & ACTION TOOLS */
+    .hud-tools {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .telemetry-chip {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-family: var(--font-code);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+    }
+
+    .telemetry-chip strong {
+      color: var(--cyan);
+    }
+
+    .cyber-btn {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(0, 240, 255, 0.1));
+      border: 1px solid var(--purple);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+    }
+
+    .cyber-btn:hover {
+      box-shadow: var(--purple-glow);
+      transform: translateY(-1px);
+    }
+
+    .cyber-btn.active-glow {
+      background: var(--purple);
+      border-color: #fff;
+      box-shadow: var(--purple-glow);
+    }
+
+    /* MAIN STAGE */
+    main {
+      flex: 1;
+      max-width: 1540px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 24px;
+      display: flex;
+      gap: 20px;
+      position: relative;
+    }
+
+    .stage-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-height: calc(100vh - 170px);
+    }
+
+    /* SLIDE CARD STYLES */
+    .slide-view {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      animation: cyberEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide-view.active {
+      display: flex;
+    }
+
+    @keyframes cyberEntrance {
+      from { opacity: 0; transform: translateY(12px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .holo-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      backdrop-filter: blur(24px);
+      border-radius: 20px;
+      padding: 28px 34px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* CORNER TECH ACCENTS */
+    .holo-card::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0;
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, transparent 50%, rgba(0, 240, 255, 0.3) 50%);
+      pointer-events: none;
+    }
+
+    .slide-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+
+    .tag-track {
+      font-family: var(--font-code);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .tag-track span.slash {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .slide-main-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.7px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* GRIDS & LAYOUT */
+    .cyber-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .cyber-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .cyber-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    /* CYBER PANELS */
+    .cyber-box {
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .cyber-box:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .cyber-box.border-cyan { border-left: 3px solid var(--cyan); }
+    .cyber-box.border-emerald { border-left: 3px solid var(--emerald); }
+    .cyber-box.border-purple { border-left: 3px solid var(--purple); }
+    .cyber-box.border-amber { border-left: 3px solid var(--amber); }
+    .cyber-box.border-rose { border-left: 3px solid var(--rose); }
+
+    .box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .box-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chip {
+      font-family: var(--font-code);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .chip-cyan { background: rgba(0, 240, 255, 0.15); color: var(--cyan); border: 1px solid rgba(0, 240, 255, 0.3); }
+    .chip-emerald { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .chip-amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .chip-rose { background: rgba(255, 0, 85, 0.15); color: var(--rose); border: 1px solid rgba(255, 0, 85, 0.3); }
+    .chip-purple { background: rgba(168, 85, 247, 0.15); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    p {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-dim);
+    }
+
+    strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* CYBER PHONE MOCKUP */
+    .phone-mockup-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .cyber-phone {
+      width: 220px;
+      height: 380px;
+      background: #000;
+      border: 3px solid rgba(0, 240, 255, 0.5);
+      border-radius: 36px;
+      padding: 12px;
+      box-shadow: 
+        0 0 30px rgba(0, 240, 255, 0.2),
+        inset 0 0 15px rgba(0, 240, 255, 0.15);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .phone-camera-notch {
+      width: 60px;
+      height: 14px;
+      background: #0f172a;
+      border-radius: 10px;
+      margin: 0 auto;
+    }
+
+    .phone-screen {
+      background: radial-gradient(circle at 50% 30%, rgba(15, 23, 42, 0.9), #030712);
+      border-radius: 24px;
+      flex: 1;
+      margin: 10px 0;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .phone-status-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--cyan-glow);
+    }
+
+    .phone-status-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--cyan);
+    }
+
+    /* CYBER ENTITY PASSPORT CARDS */
+    .entity-passport {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .entity-passport::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+    }
+
+    .entity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-code);
+      font-size: 12px;
+    }
+
+    .entity-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .field-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-code);
+      font-size: 11.5px;
+    }
+
+    .field-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+
+    .field-item .f-name { color: var(--text-cyber); }
+    .field-item .f-type { color: var(--amber); }
+
+    /* HUD TABLE */
+    .hud-table-wrapper {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(3, 7, 18, 0.5);
+    }
+
+    table.hud-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    table.hud-table th {
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--cyan);
+      font-family: var(--font-code);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-glow);
+    }
+
+    table.hud-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-dim);
+    }
+
+    table.hud-table tr:hover td {
+      background: rgba(0, 240, 255, 0.03);
+      color: #fff;
+    }
+
+    .method-pill {
+      font-family: var(--font-code);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .pill-post { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .pill-get { background: rgba(0, 240, 255, 0.2); color: #38bdf8; border: 1px solid #00f0ff; }
+    .pill-patch { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+
+    /* CODE TERMINAL */
+    .cyber-terminal {
+      background: #02040a;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 12px;
+      font-family: var(--font-code);
+      font-size: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+    }
+
+    .terminal-bar {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .t-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .t-red { background: #ef4444; }
+    .t-yellow { background: #f59e0b; }
+    .t-green { background: #10b981; }
+
+    .terminal-title {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .terminal-body {
+      padding: 16px;
+      overflow-x: auto;
+      line-height: 1.55;
+      color: #e2e8f0;
+      max-height: 240px;
+    }
+
+    .syntax-kw { color: #f43f5e; font-weight: 700; }
+    .syntax-prop { color: #38bdf8; }
+    .syntax-str { color: #34d399; }
+    .syntax-num { color: #fbbf24; }
+    .syntax-comm { color: #64748b; font-style: italic; }
+
+    /* INTERACTIVE POSTMAN SIMULATOR (SLIDE 5) */
+    .postman-nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .postman-tab {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-dim);
+      color: var(--text-dim);
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .postman-tab.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+
+    /* BOTTOM CONTROLS & PROGRESS */
+    footer {
+      max-width: 1540px;
+      width: 100%;
+      margin: 0 auto 16px auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stage-btn {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-dim);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .stage-btn:hover:not(:disabled) {
+      border-color: var(--cyan);
+      background: rgba(0, 240, 255, 0.1);
+      box-shadow: var(--cyan-glow);
+    }
+
+    .stage-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .progress-hud {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      max-width: 440px;
+      margin: 0 24px;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      box-shadow: 0 0 12px var(--cyan);
+      width: 16.66%;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-count {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--text-cyber);
+    }
+
+    /* CYBER SCRIPT DRAWER (ORADORES) */
+    .speaker-drawer {
+      width: 460px;
+      background: rgba(3, 7, 18, 0.95);
+      border: 1px solid var(--purple);
+      border-radius: 20px;
+      display: none;
+      flex-direction: column;
+      box-shadow: -15px 0 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(168, 85, 247, 0.2);
+      animation: cyberDrawerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      z-index: 90;
+    }
+
+    .speaker-drawer.open {
+      display: flex;
+    }
+
+    @keyframes cyberDrawerIn {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .drawer-top {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-top-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drawer-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .dialogue-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 0 15px rgba(168, 85, 247, 0.05);
+    }
+
+    .speaker-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .speaker-avatar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--purple);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      box-shadow: var(--purple-glow);
+    }
+
+    .spoken-text {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #f1f5f9;
+      font-style: italic;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px 14px;
+      border-radius: 8px;
+      border-left: 2px solid var(--purple);
+    }
+
+    .live-action-box {
+      font-size: 12px;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 240, 255, 0.08);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 240, 255, 0.2);
+    }
+
+    @media (max-width: 1024px) {
+      .cyber-grid-2, .cyber-grid-3, .cyber-grid-4 {
+        grid-template-columns: 1fr;
+      }
+      .speaker-drawer {
+        position: fixed;
+        right: 0; top: 60px; bottom: 0;
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HUD BAR -->
+  <header>
+    <div class="brand-hud">
+      <div class="device-icon-box">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 18h.01"/></svg>
+      </div>
+      <div class="brand-info">
+        <div class="brand-title">
+          SMART-LOAN // API REST
+          <span class="status-dot" title="Server Status: Ready"></span>
+        </div>
+        <div class="brand-subtitle">Programación Avanzada & QA • Equipo 01</div>
+      </div>
+    </div>
+
+    <!-- NAVEGACIÓN DIRECTA DE DIAPOSITIVAS -->
+    <div class="hud-nav">
+      <button class="hud-btn active" onclick="jumpSlide(1)">
+        <span class="slide-num">01</span> Alcance
+      </button>
+      <button class="hud-btn" onclick="jumpSlide(2)">
+        <span class="slide-num">02</span> Modelos
+      </button>
+      <button class="hud-btn" onclick="jumpSlide(3)">
+        <span class="slide-num">03</span> Base de Datos
+      </button>
+      <button class="hud-btn" onclick="jumpSlide(4)">
+        <span class="slide-num">04</span> Rutas REST
+      </button>
+      <button class="hud-btn" onclick="jumpSlide(5)">
+        <span class="slide-num">05</span> Respuestas & QA
+      </button>
+      <button class="hud-btn" onclick="jumpSlide(6)">
+        <span class="slide-num">06</span> Arquitectura
+      </button>
+    </div>
+
+    <!-- HERRAMIENTAS -->
+    <div class="hud-tools">
+      <button class="stage-btn" style="padding: 7px 12px;" onclick="toggleFullScreen()" title="Pantalla Completa">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ESCENARIO CENTRAL -->
+  <main>
+    <div class="stage-container">
+
+      <!-- ==============================================
+           SLIDE 01: PROYECTO RECIBIDO Y ALCANCE DEL BACKEND
+           ============================================== -->
+      <section class="slide-view active" id="slide-1">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>FASE 01</span>
+                <span class="slash">//</span>
+                <span>DOMINIO: SERVICIO TÉCNICO DE DISPOSITIVOS</span>
+              </div>
+              <h1 class="slide-main-title">Proyecto Recibido y Alcance del Backend</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <div class="cyber-grid-2">
+              
+              <!-- Columna 1: El Dolor del Negocio con Mockup de Smartphone -->
+              <div class="cyber-box border-cyan">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Qué Necesidad Real Resuelve?
+                  </div>
+                  <span class="chip chip-cyan">Problemática Crítica</span>
+                </div>
+                <div style="display:flex; gap:16px; align-items:center;">
+                  <div class="phone-mockup-wrapper">
+                    <div class="cyber-phone">
+                      <div class="phone-camera-notch"></div>
+                      <div class="phone-screen">
+                        <div class="phone-status-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                        </div>
+                        <div style="font-family:var(--font-code); font-size:10px; color:var(--rose); font-weight:700;">
+                          EQUIPO EN TALLER
+                        </div>
+                        <div style="font-size:11px; color:#cbd5e1; line-height:1.3;">
+                          Cliente incomunicado sin teléfono ni acceso laboral.
+                        </div>
+                        <div style="background:rgba(0, 240, 255, 0.15); border:1px solid var(--cyan); border-radius:6px; padding:4px 8px; font-family:var(--font-code); font-size:9.5px; color:var(--cyan);">
+                          CELULAR DE RESPALDO REQUERIDO
+                        </div>
+                      </div>
+                      <div style="width:30px; height:3px; background:rgba(255,255,255,0.2); border-radius:2px; margin:0 auto 4px auto;"></div>
+                    </div>
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                    <p>
+                      Al dejar su dispositivo en reparación física, los clientes sufren <strong>desconexión total</strong>. La empresa ofrece teléfonos de préstamo temporal, pero sin un backend automatizado ocurrían fallas operativas graves:
+                    </p>
+                    <ul style="list-style:none; display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-dim);">
+                      <li style="display:flex; gap:8px;"><span style="color:var(--rose)">✕</span> <strong>Descontrol de inventario:</strong> Pérdida de equipos en calle.</li>
+                      <li style="display:flex; gap:8px;"><span style="color:var(--rose)">✕</span> <strong>Doble asignación:</strong> Prestar el mismo celular a dos personas.</li>
+                      <li style="display:flex; gap:8px;"><span style="color:var(--rose)">✕</span> <strong>Entregas indebidas:</strong> Préstamos a morosos o no elegibles.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna 2: Las 4 Operaciones y Estado de Decisiones -->
+              <div class="cyber-box border-purple">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Operaciones & Socialización de Dudas
+                  </div>
+                  <span class="chip chip-purple">Alcance Fase 1</span>
+                </div>
+
+                <div style="background:rgba(0, 240, 255, 0.05); border:1px solid rgba(0, 240, 255, 0.15); border-radius:10px; padding:12px;">
+                  <span style="font-family:var(--font-code); font-size:11px; color:var(--cyan); font-weight:700;">
+                    4 OPERACIONES BACKEND A IMPLEMENTAR:
+                  </span>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                    <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:11.5px;">
+                      <strong style="color:var(--cyan)">RF-01 (HU-01):</strong> Registrar Préstamo
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:11.5px;">
+                      <strong style="color:var(--cyan)">RF-02 (HU-02):</strong> Consultar Préstamo
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:11.5px;">
+                      <strong style="color:var(--cyan)">RF-03 (HU-03):</strong> Listar Préstamos Activos
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; font-size:11.5px;">
+                      <strong style="color:var(--cyan)">RF-04 (HU-04):</strong> Registrar Devolución
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+                  <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.25); border-radius:8px; padding:10px; font-size:12px;">
+                    <strong style="color:var(--emerald);">✅ DECISIÓN TÉCNICA ACORDADA:</strong> La duración del préstamo no es fija ni arbitraria; está atada a la estimación técnica de la <strong>Orden de Servicio</strong>.
+                  </div>
+                  <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.25); border-radius:8px; padding:10px; font-size:12px;">
+                    <strong style="color:var(--amber);">⏳ DECISIONES PENDIENTES (Fase 2):</strong> 1. Automatización del cálculo de fecha límite vs ingreso manual por el coordinador. 2. Autorización de prórrogas si se demora un repuesto de importación.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           SLIDE 02: MODELOS Y DATOS
+           ============================================== -->
+      <section class="slide-view" id="slide-2">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>ESTRUCTURA DE DATOS</span>
+                <span class="slash">//</span>
+                <span>INTEGRIDAD REFERENCIAL & REGLAS</span>
+              </div>
+              <h1 class="slide-main-title">Modelos, Entidades y Reglas de Negocio</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <!-- 4 Entidades Estilo Pasaporte Tecnológico -->
+            <div class="cyber-grid-4">
+              
+              <!-- Cliente -->
+              <div class="entity-passport">
+                <div class="entity-header">
+                  <span class="chip chip-cyan">APOYO</span>
+                  <span style="color:var(--text-dim)">CLI-001</span>
+                </div>
+                <div class="entity-name">Cliente</div>
+                <div class="field-list">
+                  <div class="field-item"><span class="f-name">id_cliente</span><span class="f-type">TEXT (PK)</span></div>
+                  <div class="field-item"><span class="f-name">nombre</span><span class="f-type">TEXT</span></div>
+                  <div class="field-item"><span class="f-name">es_elegible</span><span class="f-type">BOOLEAN</span></div>
+                </div>
+                <div style="font-size:11px; color:var(--text-cyber); margin-top:4px;">
+                  🔒 <strong>RN-01:</strong> Debe tener <code>es_elegible = true</code> para recibir un teléfono.
+                </div>
+              </div>
+
+              <!-- Orden -->
+              <div class="entity-passport">
+                <div class="entity-header">
+                  <span class="chip chip-amber">APOYO</span>
+                  <span style="color:var(--text-dim)">ST-001</span>
+                </div>
+                <div class="entity-name">Orden Servicio</div>
+                <div class="field-list">
+                  <div class="field-item"><span class="f-name">id_orden</span><span class="f-type">TEXT (PK)</span></div>
+                  <div class="field-item"><span class="f-name">id_cliente</span><span class="f-type">TEXT (FK)</span></div>
+                  <div class="field-item"><span class="f-name">estado_equipo</span><span class="f-type">ENUM</span></div>
+                </div>
+                <div style="font-size:11px; color:var(--amber); margin-top:4px;">
+                  🔒 <strong>RN-02:</strong> Requiere estado <code>EN_REPARACION</code> para calificar.
+                </div>
+              </div>
+
+              <!-- Celular -->
+              <div class="entity-passport">
+                <div class="entity-header">
+                  <span class="chip chip-emerald">INVENTARIO</span>
+                  <span style="color:var(--text-dim)">CEL-001</span>
+                </div>
+                <div class="entity-name">Celular Soporte</div>
+                <div class="field-list">
+                  <div class="field-item"><span class="f-name">id_celular</span><span class="f-type">TEXT (PK)</span></div>
+                  <div class="field-item"><span class="f-name">modelo</span><span class="f-type">TEXT</span></div>
+                  <div class="field-item"><span class="f-name">disponible</span><span class="f-type">BOOLEAN</span></div>
+                </div>
+                <div style="font-size:11px; color:var(--emerald); margin-top:4px;">
+                  🔒 <strong>RN-06:</strong> Bloquea préstamos si <code>disponible = false</code> (CA-02).
+                </div>
+              </div>
+
+              <!-- Préstamo -->
+              <div class="entity-passport" style="border: 1px solid var(--purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);">
+                <div class="entity-header">
+                  <span class="chip chip-purple">CORE NÚCLEO</span>
+                  <span style="color:var(--purple)">PRE-001</span>
+                </div>
+                <div class="entity-name" style="color:#e9d5ff">Préstamo</div>
+                <div class="field-list">
+                  <div class="field-item"><span class="f-name">id_prestamo</span><span class="f-type">TEXT (PK)</span></div>
+                  <div class="field-item"><span class="f-name">id_cliente/orden/cel</span><span class="f-type">FKs</span></div>
+                  <div class="field-item"><span class="f-name">fecha_inicio/fin</span><span class="f-type">TIMESTAMP</span></div>
+                  <div class="field-item"><span class="f-name">estado</span><span class="f-type">'ACTIVO'|'DEV'</span></div>
+                </div>
+                <div style="font-size:11px; color:#c084fc; margin-top:4px;">
+                  ⚡ Centraliza el ciclo de vida y control de custodia.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Panel de Restricciones y QA Integrity -->
+            <div class="cyber-box border-cyan" style="margin-top:6px;">
+              <div class="box-header">
+                <div class="box-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Garantías de Integridad y Transiciones Atómicas
+                </div>
+                <span class="chip chip-cyan">14 Reglas (RN-01 a RN-14)</span>
+              </div>
+              <div class="cyber-grid-3" style="gap:14px;">
+                <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; font-size:12px; border-left:2px solid var(--emerald);">
+                  <strong style="color:var(--emerald)">RN-07: Bloqueo Atómico de Celular</strong><br>
+                  Al crearse el préstamo, el celular pasa a <code>disponible = 0</code> en la misma transacción. No hay ventana de vulnerabilidad.
+                </div>
+                <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; font-size:12px; border-left:2px solid var(--rose);">
+                  <strong style="color:var(--rose)">RN-12: Aislamiento Ante Rechazo</strong><br>
+                  Si el celular está ocupado, la API frena la operación (CA-02), hace rollback y ningún dato existente es alterado.
+                </div>
+                <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; font-size:12px; border-left:2px solid var(--purple);">
+                  <strong style="color:var(--purple)">RN-11: Liberación en Devolución</strong><br>
+                  Al devolver el equipo, el préstamo pasa a <code>DEVUELTO</code> y el celular vuelve a <code>disponible = 1</code> inmediatamente.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           SLIDE 03: BASE DE DATOS Y MOTOR ELEGIDO
+           ============================================== -->
+      <section class="slide-view" id="slide-3">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>MOTOR DE PERSISTENCIA</span>
+                <span class="slash">//</span>
+                <span>TRANSACCIONALIDAD ACID</span>
+              </div>
+              <h1 class="slide-main-title">Persistencia, Motor Elegido y Esquema Relacional</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <div class="cyber-grid-2">
+              
+              <!-- Justificación Técnica -->
+              <div class="cyber-box border-emerald">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    ¿Qué Motor Elegimos y Por Qué?
+                  </div>
+                  <span class="chip chip-emerald">SQLite 3 Relacional</span>
+                </div>
+                <p>
+                  Para garantizar la robustez que exige QA, seleccionamos <strong>SQLite 3 nativo</strong> con capacidades transaccionales completas y camino directo hacia <strong>PostgreSQL</strong>:
+                </p>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+                  <div style="background:rgba(0,0,0,0.35); padding:10px; border-radius:8px; font-size:12.5px; border-left:3px solid var(--cyan);">
+                    <strong style="color:var(--cyan)">1. Transacciones ACID Estrictas:</strong> Permite envolver el registro de préstamo en <code>BEGIN TRANSACTION ... COMMIT</code>, eliminando de raíz las condiciones de carrera (Race Conditions).
+                  </div>
+                  <div style="background:rgba(0,0,0,0.35); padding:10px; border-radius:8px; font-size:12.5px; border-left:3px solid var(--emerald);">
+                    <strong style="color:var(--emerald)">2. Integridad Referencial Forzada:</strong> Con <code>PRAGMA foreign_keys = ON</code>, la base de datos rechaza a nivel de motor cualquier intento de registrar un préstamo huérfano.
+                  </div>
+                  <div style="background:rgba(0,0,0,0.35); padding:10px; border-radius:8px; font-size:12.5px; border-left:3px solid var(--purple);">
+                    <strong style="color:var(--purple)">3. Cero Credenciales Expuestas:</strong> Cumplimiento estricto de la directriz de seguridad del docente: no hay passwords en repositorios ni puertos abiertos a internet.
+                  </div>
+                </div>
+              </div>
+
+              <!-- DDL y Estrategia de Consulta -->
+              <div class="cyber-box border-purple">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    Esquema DDL y Persistencia
+                  </div>
+                  <span class="chip chip-purple">DDL Schema</span>
+                </div>
+
+                <div class="cyber-terminal">
+                  <div class="terminal-bar">
+                    <div class="terminal-dots">
+                      <span class="t-dot t-red"></span>
+                      <span class="t-dot t-yellow"></span>
+                      <span class="t-dot t-green"></span>
+                    </div>
+                    <div class="terminal-title">schema.sql (SQLite 3 DDL)</div>
+                  </div>
+                  <div class="terminal-body">
+<span class="syntax-kw">PRAGMA</span> foreign_keys = <span class="syntax-num">ON</span>;
+
+<span class="syntax-kw">CREATE TABLE</span> clientes (
+  id_cliente <span class="syntax-prop">TEXT PRIMARY KEY</span>,
+  nombre <span class="syntax-prop">TEXT NOT NULL</span>,
+  es_elegible <span class="syntax-prop">INTEGER NOT NULL</span> <span class="syntax-kw">CHECK</span>(es_elegible <span class="syntax-kw">IN</span> (0,1))
+);
+
+<span class="syntax-kw">CREATE TABLE</span> celulares (
+  id_celular <span class="syntax-prop">TEXT PRIMARY KEY</span>,
+  modelo <span class="syntax-prop">TEXT NOT NULL</span>,
+  disponible <span class="syntax-prop">INTEGER NOT NULL</span> <span class="syntax-kw">CHECK</span>(disponible <span class="syntax-kw">IN</span> (0,1))
+);
+
+<span class="syntax-kw">CREATE TABLE</span> prestamos (
+  id_prestamo <span class="syntax-prop">TEXT PRIMARY KEY</span>,
+  id_cliente <span class="syntax-prop">TEXT REFERENCES</span> clientes(id_cliente),
+  id_orden <span class="syntax-prop">TEXT REFERENCES</span> ordenes(id_orden),
+  id_celular <span class="syntax-prop">TEXT REFERENCES</span> celulares(id_celular),
+  estado <span class="syntax-prop">TEXT CHECK</span>(estado <span class="syntax-kw">IN</span> (<span class="syntax-str">'ACTIVO'</span>, <span class="syntax-str">'DEVUELTO'</span>))
+);
+                  </div>
+                </div>
+
+                <div style="font-size:11.5px; color:var(--text-dim); margin-top:2px;">
+                  ⚡ <strong>Estrategia de Consulta:</strong> Búsqueda indexada por <code>estado = 'ACTIVO'</code> para responder en &lt;2ms las consultas de monitoreo en taller.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           SLIDE 04: RUTAS Y CONTRATOS HTTP
+           ============================================== -->
+      <section class="slide-view" id="slide-4">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>CONTRATOS RESTFUL</span>
+                <span class="slash">//</span>
+                <span>ENDPOINT MAPPING & VERBOS</span>
+              </div>
+              <h1 class="slide-main-title">Rutas, Métodos HTTP y Contrato de Operaciones</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <!-- Tabla de Rutas Estilo Consola de API Gateway -->
+            <div class="hud-table-wrapper">
+              <table class="hud-table">
+                <thead>
+                  <tr>
+                    <th>Requerimiento & HU</th>
+                    <th>Método</th>
+                    <th>Ruta Endpoint</th>
+                    <th>Parámetros de Entrada</th>
+                    <th>Respuesta Exitosa</th>
+                    <th>Mapeo de Errores QA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong style="color:#fff;">RF-01 (HU-01)</strong><br>
+                      <span style="font-size:11px; color:var(--text-cyber)">Registrar Préstamo</span>
+                    </td>
+                    <td><span class="method-pill pill-post">POST</span></td>
+                    <td><code>/api/v1/prestamos</code></td>
+                    <td>
+                      <span style="font-family:var(--font-code); font-size:11.5px;">Body JSON:</span><br>
+                      <code>{ id_cliente, id_orden, id_celular, fecha_limite }</code>
+                    </td>
+                    <td>
+                      <strong style="color:var(--emerald)">201 Created</strong><br>
+                      <span style="font-size:11px;">Objeto Préstamo ACTIVO</span>
+                    </td>
+                    <td>
+                      <span class="chip chip-rose">409 Conflict</span> Celular ocupado (CA-02)<br>
+                      <span class="chip chip-amber">400 Bad Request</span> No elegible (RN-01)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong style="color:#fff;">RF-02 (HU-02)</strong><br>
+                      <span style="font-size:11px; color:var(--text-cyber)">Consultar Préstamo</span>
+                    </td>
+                    <td><span class="method-pill pill-get">GET</span></td>
+                    <td><code>/api/v1/prestamos/:id</code></td>
+                    <td>
+                      <span style="font-family:var(--font-code); font-size:11.5px;">Path Param:</span><br>
+                      <code>:id</code> (ej. <code>PRE-001</code>)
+                    </td>
+                    <td>
+                      <strong style="color:var(--emerald)">200 OK</strong><br>
+                      <span style="font-size:11px;">Detalle de cliente y equipo</span>
+                    </td>
+                    <td>
+                      <span class="chip chip-amber">404 Not Found</span> No existe (RN-08)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong style="color:#fff;">RF-03 (HU-03)</strong><br>
+                      <span style="font-size:11px; color:var(--text-cyber)">Listar Préstamos Activos</span>
+                    </td>
+                    <td><span class="method-pill pill-get">GET</span></td>
+                    <td><code>/api/v1/prestamos</code></td>
+                    <td>
+                      <span style="font-family:var(--font-code); font-size:11.5px;">Query Param:</span><br>
+                      <code>?estado=ACTIVO</code>
+                    </td>
+                    <td>
+                      <strong style="color:var(--emerald)">200 OK</strong><br>
+                      <span style="font-size:11px;">Array con equipos en calle</span>
+                    </td>
+                    <td>
+                      <span class="chip chip-cyan">200 []</span> Array vacío si no hay
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong style="color:#fff;">RF-04 (HU-04)</strong><br>
+                      <span style="font-size:11px; color:var(--text-cyber)">Registrar Devolución</span>
+                    </td>
+                    <td><span class="method-pill pill-patch">PATCH</span></td>
+                    <td><code>/api/v1/prestamos/:id/devolucion</code></td>
+                    <td>
+                      <span style="font-family:var(--font-code); font-size:11.5px;">Path Param:</span><br>
+                      <code>:id</code> (ej. <code>PRE-001</code>)
+                    </td>
+                    <td>
+                      <strong style="color:var(--emerald)">200 OK</strong><br>
+                      <span style="font-size:11px;">Celular liberado a true</span>
+                    </td>
+                    <td>
+                      <span class="chip chip-amber">400 Bad Request</span> Ya devuelto<br>
+                      <span class="chip chip-amber">404 Not Found</span> No encontrado
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="cyber-box border-cyan" style="margin-top:6px; padding:14px 18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-family:var(--font-display); font-size:13px; font-weight:700; color:#fff;">
+                  💡 CRITERIO DE SEMÁNTICA HTTP:
+                </span>
+                <span style="font-family:var(--font-code); font-size:11px; color:var(--cyan);">
+                  RFC 9110 HTTP Semantics Compliance
+                </span>
+              </div>
+              <p style="font-size:12px; margin-top:4px;">
+                Elegimos <strong>POST</strong> para creación (201 Created), <strong>GET</strong> idempotente para lecturas sin mutación de estado, y <strong>PATCH</strong> para la devolución porque mutamos parcialmente el estado del préstamo (`DEVUELTO`) y liberamos el recurso asignado sin destruir la entidad.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           SLIDE 05: RESPUESTAS Y POSTMAN SIMULATOR
+           ============================================== -->
+      <section class="slide-view" id="slide-5">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>SIMULADOR DE DEMOSTRACIÓN</span>
+                <span class="slash">//</span>
+                <span>CASOS CA-01 Y CA-02</span>
+              </div>
+              <h1 class="slide-main-title">Respuestas de Ejemplo y Demostración en Postman</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <!-- TABS INTERACTIVOS PARA ALTERNAR CASOS DE QA -->
+            <div class="postman-nav-tabs">
+              <button class="postman-tab active" id="tabSuccess" onclick="renderQACase('CA01')">
+                <span style="color:var(--emerald)">●</span> CASO ÉXITO (CA-01): 201 Created
+              </button>
+              <button class="postman-tab" id="tabConflict" onclick="renderQACase('CA02')">
+                <span style="color:var(--rose)">●</span> CASO RECHAZO (CA-02): 409 Conflict (Celular Ocupado)
+              </button>
+            </div>
+
+            <div class="cyber-grid-2">
+              
+              <!-- Petición Enviada -->
+              <div class="cyber-box border-cyan">
+                <div class="box-header">
+                  <div class="box-title" id="qaReqTitle">
+                    <span class="method-pill pill-post">POST</span>
+                    /api/v1/prestamos
+                  </div>
+                  <span class="chip chip-cyan">Headers: Content-Type: application/json</span>
+                </div>
+                <div class="cyber-terminal">
+                  <div class="terminal-bar">
+                    <div class="terminal-dots"><span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span></div>
+                    <div class="terminal-title">Request Body Payload</div>
+                  </div>
+                  <div class="terminal-body" id="qaReqBody">
+{
+  <span class="syntax-prop">"id_prestamo"</span>: <span class="syntax-str">"PRE-001"</span>,
+  <span class="syntax-prop">"id_cliente"</span>: <span class="syntax-str">"CLI-001"</span>,
+  <span class="syntax-prop">"id_orden"</span>: <span class="syntax-str">"ST-001"</span>,
+  <span class="syntax-prop">"id_celular"</span>: <span class="syntax-str">"CEL-001"</span>,
+  <span class="syntax-prop">"fecha_limite"</span>: <span class="syntax-str">"2026-11-10T18:00:00.000Z"</span>
+}
+                  </div>
+                </div>
+                <div style="font-size:12px; color:var(--text-dim);" id="qaReqNotes">
+                  <strong>Precondición:</strong> Cliente elegible (RN-01), orden activa (RN-02) y celular CEL-001 libre (RN-06).
+                </div>
+              </div>
+
+              <!-- Respuesta Recibida -->
+              <div class="cyber-box border-emerald" id="qaResContainer">
+                <div class="box-header">
+                  <div class="box-title" id="qaResHeader">
+                    <span class="chip chip-emerald" style="font-size:12px;">STATUS: 201 CREATED</span>
+                    Respuesta del Servidor
+                  </div>
+                  <span class="telemetry-chip" id="qaLatency">Latencia: <strong>14 ms</strong></span>
+                </div>
+                <div class="cyber-terminal">
+                  <div class="terminal-bar">
+                    <div class="terminal-dots"><span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span></div>
+                    <div class="terminal-title">JSON Response Body</div>
+                  </div>
+                  <div class="terminal-body" id="qaResBody">
+{
+  <span class="syntax-prop">"ok"</span>: <span class="syntax-kw">true</span>,
+  <span class="syntax-prop">"data"</span>: {
+    <span class="syntax-prop">"id_prestamo"</span>: <span class="syntax-str">"PRE-001"</span>,
+    <span class="syntax-prop">"id_cliente"</span>: <span class="syntax-str">"CLI-001"</span>,
+    <span class="syntax-prop">"id_celular"</span>: <span class="syntax-str">"CEL-001"</span>,
+    <span class="syntax-prop">"estado"</span>: <span class="syntax-str">"ACTIVO"</span>,
+    <span class="syntax-prop">"mensaje"</span>: <span class="syntax-str">"Préstamo registrado exitosamente. Equipo asignado."</span>
+  }
+}
+                  </div>
+                </div>
+                <div style="font-size:12px; color:var(--text-dim);" id="qaResNotes">
+                  <strong>Efecto Atómico en BD:</strong> Celular CEL-001 pasa a <code>disponible = 0</code> en la base de datos.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Resumen de la Demo para el Docente -->
+            <div class="cyber-box border-purple" style="margin-top:6px; padding:12px 18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-family:var(--font-display); font-size:12.5px; font-weight:700; color:#fff;">
+                  📋 SECUENCIA DE DEMOSTRACIÓN EN POSTMAN (5 MINUTOS):
+                </span>
+                <span style="font-family:var(--font-code); font-size:11px; color:var(--cyan)">
+                  Colección: prestamos_servicio_tecnico.postman_collection.json
+                </span>
+              </div>
+              <p style="font-size:12px; margin-top:4px;">
+                1. <strong>Consultar celular CEL-001:</strong> Mostramos que inicia libre (<code>disponible = 1</code>). → 
+                2. <strong>Crear Préstamo PRE-001:</strong> Ejecutamos CA-01 recibiendo <strong>201 Created</strong>. → 
+                3. <strong>Comprobar BD:</strong> CEL-001 ahora está ocupado. → 
+                4. <strong>Reintento con CEL-001:</strong> Demostramos CA-02 con rechazo <strong>409 Conflict</strong> y datos protegidos.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           SLIDE 06: ARQUITECTURA DEL CÓDIGO Y EQUIPO
+           ============================================== -->
+      <section class="slide-view" id="slide-6">
+        <div class="holo-card">
+          <div class="slide-topline">
+            <div>
+              <div class="tag-track">
+                <span>ESTRUCTURA DE CÓDIGO</span>
+                <span class="slash">//</span>
+                <span>DISTRIBUCIÓN DEL EQUIPO</span>
+              </div>
+              <h1 class="slide-main-title">Organización del Código, Avance Real y Aportes</h1>
+            </div>
+          </div>
+
+          <div class="content-area">
+            <div class="cyber-grid-2">
+              
+              <!-- Clean Architecture en Capas -->
+              <div class="cyber-box border-cyan">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    Separación de Responsabilidades
+                  </div>
+                  <span class="chip chip-cyan">Clean Architecture</span>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <div style="background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:8px; border-left:3px solid var(--cyan);">
+                    <div style="font-family:var(--font-code); font-size:12px; color:var(--cyan); font-weight:700;">
+                      📁 src/routes/
+                    </div>
+                    <div style="font-size:12px; color:var(--text-dim);">
+                      Define los contratos REST, endpoints y mapeo de verbos HTTP sin acoplar lógica.
+                    </div>
+                  </div>
+
+                  <div style="background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:8px; border-left:3px solid var(--emerald);">
+                    <div style="font-family:var(--font-code); font-size:12px; color:var(--emerald); font-weight:700;">
+                      📁 src/controllers/
+                    </div>
+                    <div style="font-size:12px; color:var(--text-dim);">
+                      Extrae parámetros, gestiona códigos de estado y serializa la respuesta JSON.
+                    </div>
+                  </div>
+
+                  <div style="background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:8px; border-left:3px solid var(--purple);">
+                    <div style="font-family:var(--font-code); font-size:12px; color:var(--purple); font-weight:700;">
+                      📁 src/services/ (Cerebro del Sistema)
+                    </div>
+                    <div style="font-size:12px; color:var(--text-dim);">
+                      Aplica las 14 reglas de negocio (RN-01..RN-14), transacciones ACID y rollback.
+                    </div>
+                  </div>
+
+                  <div style="background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:8px; border-left:3px solid var(--amber);">
+                    <div style="font-family:var(--font-code); font-size:12px; color:var(--amber); font-weight:700;">
+                      📁 src/config/database.js
+                    </div>
+                    <div style="font-size:12px; color:var(--text-dim);">
+                      Esquema relacional SQLite, foreign keys activas y carga de datos semilla (seeds).
+                    </div>
+                  </div>
+                </div>
+
+                <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); padding:10px 14px; border-radius:8px; margin-top:4px;">
+                  <strong style="color:var(--emerald); font-size:12px;">ESTADO REAL DEL AVANCE:</strong>
+                  <div style="font-size:12px; margin-top:2px;">
+                    ✅ <strong>100% implementadas:</strong> Las 4 operaciones (RF-01 a RF-04) ya están codificadas y operativas.<br>
+                    ⏳ <strong>Fase 2:</strong> Módulo de autenticación con JWT y cálculo automático de prórrogas.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Distribución del Equipo -->
+              <div class="cyber-box border-purple">
+                <div class="box-header">
+                  <div class="box-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Aportes de Cada Integrante
+                  </div>
+                  <span class="chip chip-purple">Equipo 01</span>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div style="background:rgba(0,0,0,0.35); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <strong style="color:#c4b5fd;">👤 Integrante 1 (Análisis & Modelado):</strong>
+                      <span class="chip chip-cyan">Data & Rules</span>
+                    </div>
+                    <div style="font-size:12px; margin-top:4px; color:var(--text-dim);">
+                      Interpretación de requisitos de la especificación, diseño del modelo relacional, integridad referencial y confección de datos de prueba (seeds).
+                    </div>
+                  </div>
+
+                  <div style="background:rgba(0,0,0,0.35); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <strong style="color:#c4b5fd;">👤 Integrante 2 (Backend & Rutas):</strong>
+                      <span class="chip chip-emerald">Core REST</span>
+                    </div>
+                    <div style="font-size:12px; margin-top:4px; color:var(--text-dim);">
+                      Configuración del servidor Express, arquitectura en capas, definición de endpoints versionados y conexión transaccional con SQLite.
+                    </div>
+                  </div>
+
+                  <div style="background:rgba(0,0,0,0.35); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <strong style="color:#c4b5fd;">👤 Integrante 3 (Lógica de Negocio & QA):</strong>
+                      <span class="chip chip-amber">Service & QA</span>
+                    </div>
+                    <div style="font-size:12px; margin-top:4px; color:var(--text-dim);">
+                      Implementación del servicio con las 14 reglas de negocio, validación de atomicidad, colección de Postman y pruebas automatizadas.
+                    </div>
+                  </div>
+                </div>
+
+                <div style="background:rgba(0, 240, 255, 0.08); border:1px solid var(--cyan); border-radius:8px; padding:10px 14px; margin-top:4px; font-size:12px; text-align:center;">
+                  🚀 <strong>¡Listos para la Demostración en Postman!</strong> Damos paso a la terminal y ejecución en vivo.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- CONTROLES INFERIORES -->
+  <footer>
+    <button class="stage-btn" id="btnPrevSlide" onclick="prevSlide()" disabled>
+      ← Anterior
+    </button>
+
+    <div class="progress-hud">
+      <div class="progress-track">
+        <div class="progress-fill" id="slideProgressBar"></div>
+      </div>
+      <div class="progress-count" id="slideCounter">SLIDE 01 / 06</div>
+    </div>
+
+    <button class="stage-btn" id="btnNextSlide" onclick="nextSlide()">
+      Siguiente →
+    </button>
+  </footer>
+
+  <script>
+    let activeSlideIndex = 1;
+    const maxSlides = 6;
+
+    // Guiones de exposición para 3 personas vinculados a cada slide
+    const scriptLibrary = {
+      1: {
+        title: "DIAPOSITIVA 01 // PROYECTO RECIBIDO Y ALCANCE",
+        speaker: "PERSONA 1",
+        role: "Contexto, Problemática & Alcance",
+        time: "~50 segundos",
+        dialogue: `"Buenas tardes profesor y compañeros. Hoy les vamos a presentar el diseño técnico y el primer avance del backend para la gestión de préstamos de celulares en un centro de servicio técnico.
+Para entender la necesidad real: imaginen que llevan su teléfono personal a reparar porque se rompió la pantalla o la batería. En ese instante quedan totalmente incomunicados de su trabajo, de su familia y de sus emergencias.
+Para mitigar esto, el taller les presta celulares de respaldo. Pero hasta hoy, eso se hacía en planillas informales, lo que provocaba un caos: celulares perdidos, equipos prestados a dos personas a la vez, o entregas a clientes morosos.
+Nuestra API resuelve esto con 4 operaciones nucleares: registrar el préstamo, consultar su detalle, listar los activos y procesar la devolución. Además, acordamos que la duración del préstamo no es un horario rígido, sino que depende directamente del tiempo estimado de reparación en la orden de servicio."`,
+        cue: "Señalar el celular en pantalla y pasar a Diapositiva 2."
+      },
+      2: {
+        title: "DIAPOSITIVA 02 // MODELOS Y REGLAS DE NEGOCIO",
+        speaker: "PERSONA 1",
+        role: "Modelado de Datos & Integridad",
+        time: "~55 segundos",
+        dialogue: `"Para blindar este proceso, modelamos cuatro entidades muy claras:
+Primero al Cliente, donde controlamos la propiedad 'es_elegible'. Si el cliente no califica, el préstamo se frena de inmediato (Regla 01).
+Segundo, la Orden de Servicio, que debe encontrarse en estado activo 'EN_REPARACION' para ameritar la entrega de un equipo de soporte (Regla 02).
+Tercero, el Celular de soporte, que tiene su modelo y la bandera 'disponible'.
+Y en el centro, el Préstamo, que une al cliente, la orden y el celular con fechas claras.
+La clave acá son las Reglas 07 y 12: en el mismo instante en que se presta un celular, este pasa a no disponible. Si alguien más intenta prestar ese mismo celular, la API lo rechaza y la base de datos no sufre ningún cambio.
+Ahora mi compañero les va a explicar cómo garantizamos esto a nivel de base de datos."`,
+        cue: "Pasar la palabra a Persona 2 y avanzar a la Diapositiva 3."
+      },
+      3: {
+        title: "DIAPOSITIVA 03 // PERSISTENCIA Y TRANSACCIONES",
+        speaker: "PERSONA 2",
+        role: "Arquitectura & Motor Relacional",
+        time: "~50 segundos",
+        dialogue: `"Muchas gracias. Al elegir la base de datos, no pensamos solo en almacenar tablas, sino en la concurrencia y la integridad. Elegimos una base de datos relacional con SQLite 3 nativo.
+¿Por qué? Por tres razones técnicas fundamentales:
+Primero, Transacciones ACID: cuando se registra un préstamo, ejecutamos un bloque atómico: se inserta el préstamo y se bloquea el celular. O se hacen ambas cosas o no se hace ninguna. Esto elimina por completo el riesgo de que dos coordinadores presten el mismo equipo al mismo tiempo.
+Segundo, Integridad referencial activa: con foreign keys obligatorias, es imposible crear préstamos con clientes o celulares inexistentes.
+Y tercero, Seguridad: no dependemos de servicios remotos con claves expuestas en el repositorio, cumpliendo con la directriz de seguridad de la cátedra.
+Ahora veamos cómo exponemos estas operaciones al exterior mediante nuestra API REST."`,
+        cue: "Señalar el bloque de código SQL y pasar a Diapositiva 4."
+      },
+      4: {
+        title: "DIAPOSITIVA 04 // RUTAS Y CONTRATOS REST",
+        speaker: "PERSONA 2",
+        role: "Contratos de Endpoints & Verbos",
+        time: "~55 segundos",
+        dialogue: `"Diseñamos 4 endpoints respetando estrictamente la semántica oficial de HTTP:
+1. Para RF-01 (Registrar Préstamo): usamos POST /api/v1/prestamos. Recibe el JSON con los identificadores y responde con 201 Created cuando todo es exitoso. Si el celular ya está ocupado, responde con 409 Conflict.
+2. Para RF-02 (Consultar Préstamo): usamos GET /api/v1/prestamos/:id, que busca por ID y devuelve el detalle con código 200 OK.
+3. Para RF-03 (Listar Préstamos Activos): usamos GET /api/v1/prestamos con el filtro '?estado=ACTIVO', permitiéndole al taller monitorear en tiempo real los equipos que están en la calle.
+4. Y para RF-04 (Registrar Devolución): usamos PATCH /api/v1/prestamos/:id/devolucion. Usamos PATCH porque es una mutación parcial: cambiamos el estado a 'DEVUELTO' y liberamos el celular atómicamente.
+A continuación, mi compañero les va a mostrar cómo responde la API en casos reales y cómo estructuramos la demo en Postman."`,
+        cue: "Pasar la palabra a Persona 3 y avanzar a Diapositiva 5."
+      },
+      5: {
+        title: "DIAPOSITIVA 05 // RESPUESTAS JSON Y QA DEMO",
+        speaker: "PERSONA 3",
+        role: "Aseguramiento de Calidad (QA) & Postman",
+        time: "~50 segundos",
+        dialogue: `"Gracias. En Aseguramiento de la Calidad (QA), el verdadero valor del backend está en cómo gestiona las fallas de negocio.
+En pantalla pueden ver los dos escenarios solicitados por la rúbrica:
+En el Criterio 01 (éxito), la API valida las condiciones y responde con código 201 Created y el objeto del préstamo activo.
+Pero miren el Criterio 02: si alguien intenta pedir un celular que ya tiene 'disponible = false', la API no se cae ni genera duplicados: devuelve limpiamente un código HTTP 409 Conflict con el error tipado 'CELULAR_NO_DISPONIBLE'.
+En la demostración práctica que les haremos en Postman a continuación, verán esta secuencia exacta: primero consultamos el inventario libre, luego registramos el préstamo con 201, verificamos el celular ocupado en la base de datos, y finalmente forzamos el rechazo 409."`,
+        cue: "Hacer click en el tab de rechazo para mostrar el color rojo del 409 y pasar a Diapositiva 6."
+      },
+      6: {
+        title: "DIAPOSITIVA 06 // ARQUITECTURA Y APORTES",
+        speaker: "PERSONA 3",
+        role: "Organización de Código & Cierre",
+        time: "~50 segundos",
+        dialogue: `"Para que el código sea limpio y testeable, aplicamos una arquitectura en capas:
+Rutas en 'routes', controladores HTTP en 'controllers', y toda la lógica de negocio junto con las 14 reglas centralizadas en 'services'. La persistencia en SQLite se encuentra desacoplada en 'database.js'.
+Respecto al avance: cumplimos con el requerimiento de tener la operación principal completa, pero además ya dejamos funcionales las 4 operaciones del alcance.
+Y en cuanto al equipo: nos repartimos el trabajo equitativamente: el Integrante 1 lideró el análisis de requisitos y el modelo relacional; el Integrante 2 construyó la arquitectura del servidor, los controladores y la configuración de persistencia; y yo implementé la capa de servicios con las reglas de negocio, las transacciones y la colección de Postman.
+Ahora, abrimos Postman para mostrarles el funcionamiento en vivo."`,
+        cue: "Cerrar diapositivas y abrir Postman para la demostración práctica de 5 minutos."
+      }
+    };
+
+    function renderSlide() {
+      for (let i = 1; i <= maxSlides; i++) {
+        const s = document.getElementById(`slide-${i}`);
+        if (s) s.classList.remove('active');
+      }
+
+      const current = document.getElementById(`slide-${activeSlideIndex}`);
+      if (current) current.classList.add('active');
+
+      // Actualizar botones superiores
+      const buttons = document.querySelectorAll('.hud-btn');
+      buttons.forEach((b, idx) => {
+        if (idx + 1 === activeSlideIndex) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+
+      // Actualizar footer
+      document.getElementById('btnPrevSlide').disabled = (activeSlideIndex === 1);
+      document.getElementById('btnNextSlide').disabled = (activeSlideIndex === maxSlides);
+      
+      const percent = (activeSlideIndex / maxSlides) * 100;
+      document.getElementById('slideProgressBar').style.width = `${percent}%`;
+      document.getElementById('slideCounter').textContent = `SLIDE 0${activeSlideIndex} / 0${maxSlides}`;
+    }
+
+    function jumpSlide(index) {
+      if (index >= 1 && index <= maxSlides) {
+        activeSlideIndex = index;
+        renderSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (activeSlideIndex < maxSlides) {
+        activeSlideIndex++;
+        renderSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (activeSlideIndex > 1) {
+        activeSlideIndex--;
+        renderSlide();
+      }
+    }
+
+    // Navegación con teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    // Simulador interactivo en Slide 5
+    function renderQACase(type) {
+      const tabSuccess = document.getElementById('tabSuccess');
+      const tabConflict = document.getElementById('tabConflict');
+      const reqTitle = document.getElementById('qaReqTitle');
+      const reqBody = document.getElementById('qaReqBody');
+      const reqNotes = document.getElementById('qaReqNotes');
+      const resContainer = document.getElementById('qaResContainer');
+      const resHeader = document.getElementById('qaResHeader');
+      const resBody = document.getElementById('qaResBody');
+      const resNotes = document.getElementById('qaResNotes');
+      const latency = document.getElementById('qaLatency');
+
+      if (type === 'CA01') {
+        tabSuccess.classList.add('active');
+        tabConflict.classList.remove('active');
+
+        reqTitle.innerHTML = `<span class="method-pill pill-post">POST</span> /api/v1/prestamos`;
+        reqBody.innerHTML = `{\n  <span class="syntax-prop">"id_prestamo"</span>: <span class="syntax-str">"PRE-001"</span>,\n  <span class="syntax-prop">"id_cliente"</span>: <span class="syntax-str">"CLI-001"</span>,\n  <span class="syntax-prop">"id_orden"</span>: <span class="syntax-str">"ST-001"</span>,\n  <span class="syntax-prop">"id_celular"</span>: <span class="syntax-str">"CEL-001"</span>,\n  <span class="syntax-prop">"fecha_limite"</span>: <span class="syntax-str">"2026-11-10T18:00:00.000Z"</span>\n}`;
+        reqNotes.innerHTML = `<strong>Precondición:</strong> Cliente elegible (RN-01), orden activa (RN-02) y celular CEL-001 libre (RN-06).`;
+
+        resContainer.className = 'cyber-box border-emerald';
+        resHeader.innerHTML = `<span class="chip chip-emerald" style="font-size:12px;">STATUS: 201 CREATED</span> Respuesta Exitosa`;
+        latency.innerHTML = `Latencia: <strong>14 ms</strong>`;
+        resBody.innerHTML = `{\n  <span class="syntax-prop">"ok"</span>: <span class="syntax-kw">true</span>,\n  <span class="syntax-prop">"data"</span>: {\n    <span class="syntax-prop">"id_prestamo"</span>: <span class="syntax-str">"PRE-001"</span>,\n    <span class="syntax-prop">"id_cliente"</span>: <span class="syntax-str">"CLI-001"</span>,\n    <span class="syntax-prop">"id_celular"</span>: <span class="syntax-str">"CEL-001"</span>,\n    <span class="syntax-prop">"estado"</span>: <span class="syntax-str">"ACTIVO"</span>,\n    <span class="syntax-prop">"mensaje"</span>: <span class="syntax-str">"Préstamo registrado exitosamente. Equipo asignado."</span>\n  }\n}`;
+        resNotes.innerHTML = `<strong>Efecto Atómico en BD:</strong> Celular CEL-001 pasa a <code>disponible = 0</code> en la base de datos.`;
+      } else {
+        tabConflict.classList.add('active');
+        tabSuccess.classList.remove('active');
+
+        reqTitle.innerHTML = `<span class="method-pill pill-post" style="border-color:var(--rose); color:var(--rose)">POST</span> /api/v1/prestamos (Reintento)`;
+        reqBody.innerHTML = `{\n  <span class="syntax-prop">"id_prestamo"</span>: <span class="syntax-str">"PRE-002"</span>,\n  <span class="syntax-prop">"id_cliente"</span>: <span class="syntax-str">"CLI-001"</span>,\n  <span class="syntax-prop">"id_orden"</span>: <span class="syntax-str">"ST-001"</span>,\n  <span class="syntax-prop">"id_celular"</span>: <span class="syntax-str">"CEL-001"</span> <span style="color:var(--rose)">// Ya ocupado!</span>\n}`;
+        reqNotes.innerHTML = `<strong>Condición de Falla:</strong> Celular CEL-001 ya tiene <code>disponible = false</code> (Regla RN-06).`;
+
+        resContainer.className = 'cyber-box border-rose';
+        resHeader.innerHTML = `<span class="chip chip-rose" style="font-size:12px;">STATUS: 409 CONFLICT</span> Rechazo de Regla de Negocio`;
+        latency.innerHTML = `Latencia: <strong>8 ms</strong>`;
+        resBody.innerHTML = `{\n  <span class="syntax-prop">"ok"</span>: <span class="syntax-kw">false</span>,\n  <span class="syntax-prop">"error"</span>: <span class="syntax-str">"CELULAR_NO_DISPONIBLE"</span>,\n  <span class="syntax-prop">"message"</span>: <span class="syntax-str">"El celular Galaxy A54 (CEL-001) ya se encuentra ocupado en otro préstamo."</span>,\n  <span class="syntax-prop">"timestamp"</span>: <span class="syntax-str">"2026-11-03T22:15:00.000Z"</span>\n}`;
+        resNotes.innerHTML = `<strong>Garantía QA:</strong> Rollback transaccional. La base de datos no sufre alteraciones (RN-12).`;
+      }
+    }
+
+    // Pantalla completa
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Inicializar
+    renderSlide();
+  </script>
+</body>
+</html>
